@@ -35,12 +35,12 @@
     
 
     //  enable scheduler
-    if(isset($_PSOT['enable_scheduler'])) {
+    if(isset($_POST['enable_scheduler'])) {
         $db->query("UPDATE t_manager SET m_schedule='1' WHERE m_uid='$bot_id'");
     }
 
     //  disable scheduler
-    if(isset($_PSOT['disable_scheduler'])) {
+    if(isset($_POST['disable_scheduler'])) {
         $db->query("UPDATE t_manager SET m_schedule='0' WHERE m_uid='$bot_id'");
     }
 
@@ -113,8 +113,8 @@
                     </svg>
                 </div>
                 <div class="d-block">
-                    <h3>DealsAndSpecialOffers</h3>
-                    <p class="lead">@dealsandofferbot</p>
+                    <h3><?php echo (new telegramBot($bot_id))->getMe()["result"]["first_name"]; ?></h3>
+                    <p class="lead">@<?php echo (new telegramBot($bot_id))->getMe()["result"]["username"]; ?></p>
                 </div>
             </div>
         </section>
@@ -123,7 +123,13 @@
         <nav class="sticky-top navbar navbar-expand-md navbar-light bg-light border shadow-sm">
             <div class="container">
                 <div class="nav nav-pills flex-nowrap text-center" id="nav-tab" role="tablist">
-                    <a class="nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <a class="nav-link active" id="nav-contact-tab" data-toggle="tab" href="#bot-info" role="tab" aria-controls="nav-contact" aria-selected="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412l-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                        </svg>
+                        <span class="ml-1">Info</span>
+                    </a>
+                    <a class="nav-link" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat-left-dots-fill" viewBox="0 0 16 16">
                             <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm5 4a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
                         </svg>
@@ -141,7 +147,23 @@
 
         <section class="container my-md-4">
             <div class="tab-content" id="nav-tabContent">
-                <div class="row tab-pane fade show active min-vh-100" id="nav-home">
+                <div class="row tab-pane fade min-vh-100 active show" id="bot-info">
+                    <div class="container row m-0 p-0">  
+                        <?php
+                            $json = (new telegramBot($bot_id))->getMe()["result"];
+                            foreach ($json as $key => $value) {
+                                echo '<div class="card col-md-12 shadow border">
+                                        <div class="card-body">
+                                            <h5 class="card-title font-weight-bold">' . $key . '</h5>
+                                            <p class="card-text text-muted">' . $value . '</p>
+                                            </form>
+                                        </div>
+                                    </div>';
+                            }
+                        ?>
+                    </div>
+                </div>
+                <div class="row tab-pane fade min-vh-100" id="nav-home">
                     <div class="list-group rounded-lg overflow-hidden shadow">
                     <?php 
                         foreach ($sqlDataMsg as $msg) {
