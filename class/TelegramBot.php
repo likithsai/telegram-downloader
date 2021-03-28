@@ -1,6 +1,8 @@
 <?php
 
-    require 'TelegramException.php';
+    class TelegramException extends Exception {
+        
+    }
 
     class telegramBot
     {
