@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 28, 2021 at 05:25 AM
+-- Generation Time: Mar 28, 2021 at 07:13 PM
 -- Server version: 10.4.17-MariaDB
 -- PHP Version: 8.0.2
 
@@ -34,7 +34,7 @@ CREATE TABLE `t_manager` (
   `m_userid` int(11) NOT NULL,
   `m_schedule` int(11) NOT NULL,
   `m_date` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `t_manager`
@@ -53,7 +53,7 @@ CREATE TABLE `t_manager_type` (
   `mtype_id` int(11) NOT NULL,
   `mtype_name` varchar(20) CHARACTER SET latin1 NOT NULL,
   `mtype_date` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `t_manager_type`
@@ -71,12 +71,12 @@ INSERT INTO `t_manager_type` (`mtype_id`, `mtype_name`, `mtype_date`) VALUES
 
 CREATE TABLE `t_messages` (
   `msg_id` int(11) NOT NULL,
-  `msg_content` varchar(100) NOT NULL,
+  `msg_content` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `msg_uid` int(11) NOT NULL,
   `msg_botid` varchar(100) CHARACTER SET latin1 NOT NULL,
   `msg_schedule` tinyint(1) NOT NULL DEFAULT 0,
   `msg_date` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `t_messages`
@@ -101,7 +101,10 @@ INSERT INTO `t_messages` (`msg_id`, `msg_content`, `msg_uid`, `msg_botid`, `msg_
 (22, '????????', 1, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 0, '2021-03-20 17:49:42'),
 (23, 'uydgyusdc\r\n', 1, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 0, '2021-03-21 16:17:25'),
 (24, 'uydgyusdc\r\n', 1, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 0, '2021-03-21 16:17:38'),
-(25, 'Djdbdh', 1, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 0, '2021-03-27 16:55:42');
+(25, 'Djdbdh', 1, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 0, '2021-03-27 16:55:42'),
+(26, '???? Birthday', 1, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 0, '2021-03-28 14:41:02'),
+(27, '???? Birthday', 1, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 0, '2021-03-28 14:44:11'),
+(28, '🎂 Birthday', 1, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 0, '2021-03-28 14:48:28');
 
 -- --------------------------------------------------------
 
@@ -114,7 +117,7 @@ CREATE TABLE `t_user` (
   `u_username` varchar(2000) CHARACTER SET latin1 NOT NULL,
   `u_password` varchar(2000) CHARACTER SET latin1 NOT NULL,
   `u_date` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `t_user`
@@ -176,7 +179,7 @@ ALTER TABLE `t_manager_type`
 -- AUTO_INCREMENT for table `t_messages`
 --
 ALTER TABLE `t_messages`
-  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `t_user`
