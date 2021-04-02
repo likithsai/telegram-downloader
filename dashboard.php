@@ -50,7 +50,7 @@
                     <div class="card mb-4 shadow-s">
                       <div class="card-body">
                           <h5 class="card-title"><a href="info.php?id=' . $a['m_uid'] . '&chat_id=' . $a['m_chatid'] . '">' . (new telegramBot($a['m_uid']))->getMe()["result"]["first_name"] . '</a></h5>
-                          <p class="card-text text-muted small">@' . (new telegramBot($a['m_uid']))->getMe()["result"]["username"] . '</p>
+                          <p class="card-text text-muted small">' . (new telegramBot($a['m_uid']))->getChat($a['m_chatid'])["result"]["description"] . '</p>
                           <div class="d-flex justify-content-between align-items-center">
                             <div class="btn-group">
                                 <a href="dashboard.php?task=delete&id=' . $a["m_id"] .'" onclick="return confirm(\'Are you sure you want to delete this item?\');" class="card-link text-danger small">
