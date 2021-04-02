@@ -30,8 +30,9 @@
 
     //  if bot form is submitted
     if(isset($_POST['create_bot_submit'])) {
-        $bot_id = $_POST['bot_id'];       
-        $db->query("INSERT INTO t_manager (m_uid, m_type, m_userid) VALUES('$bot_id', 1, $uid)");
+        $bot_id = $_POST['bot_id'];  
+        $chat_id = $_POST['chat_id'];     
+        $db->query("INSERT INTO t_manager (m_uid, m_chatid, m_type, m_userid, m_schedule) VALUES('$bot_id', '$chat_id', 1, $uid, 0)");
     }
     
     //   ajax call for edit
@@ -48,7 +49,7 @@
           echo '<div class="col-md-4">
                     <div class="card mb-4 shadow-s">
                       <div class="card-body">
-                          <h5 class="card-title"><a href="info.php?id=' . $a['m_uid'] . '">' . (new telegramBot($a['m_uid']))->getMe()["result"]["first_name"] . '</a></h5>
+                          <h5 class="card-title"><a href="info.php?id=' . $a['m_uid'] . '&chat_id=' . $a['m_chatid'] . '">' . (new telegramBot($a['m_uid']))->getMe()["result"]["first_name"] . '</a></h5>
                           <p class="card-text text-muted small">@' . (new telegramBot($a['m_uid']))->getMe()["result"]["username"] . '</p>
                           <div class="d-flex justify-content-between align-items-center">
                             <div class="btn-group">
@@ -102,6 +103,10 @@
                                  <div class="form-group">
                                     <label for="exampleFormControlInput1">Bot ID</label>
                                     <input type="text" name="bot_id" class="form-control" placeholder="Enter Bot ID" />
+                                 </div>
+                                 <div class="form-group">
+                                    <label for="exampleFormControlInput1">Chat ID</label>
+                                    <input type="text" name="chat_id" class="form-control" placeholder="Enter Bot ID" />
                                  </div>
                               </div>
                               <button type="submit" name="create_bot_submit" class="col-md-12 btn btn-danger">

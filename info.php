@@ -9,8 +9,8 @@
         exit();
     }
 
-
     $bot_id = $_GET['id'];
+    $chat_id = $_GET['chat_id'];
     $uid = $_SESSION['session_user_id'];
 
     $sql = "SELECT * FROM t_user WHERE u_id='$uid'";
@@ -24,7 +24,7 @@
     if(isset($_POST['send-message-btn']) && isset($_POST['send-message-text'])) { 
         $msg_content = html_entity_decode($_POST['send-message-text']);
         $db->query("INSERT INTO t_messages (msg_content, msg_uid, msg_botid) VALUES('$msg_content', $uid, '$bot_id')");
-        (new telegramBot($bot_id))->sendMessage ('-1001436094290', $msg_content, 'html', true);
+        (new telegramBot($bot_id))->sendMessage ($chat_id, $msg_content, 'html', true);
     }
 
     //  schedule message
@@ -135,6 +135,13 @@
                         </svg>
                         <span class="ml-1">Messages</span>
                     </a>
+                    <a class="nav-link" id="nav-home-tab" data-toggle="tab" href="#bot-user" role="tab" aria-controls="nav-home" aria-selected="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                            <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                        </svg>
+                        <span class="ml-1">Users</span>
+                    </a>
                     <a class="nav-link" id="nav-contact-tab" data-toggle="tab" href="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="false">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock-fill" viewBox="0 0 16 16">
                             <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
@@ -241,27 +248,54 @@
                                         </div>
                                     </div>
                             </div>';
-                            
-                            // echo '<a href="#" class="list-group-item list-group-item-action list-group-item-light rounded-0">
-                            //         <div class="media">';
-                                        
-                            // if($msg['msg_schedule']) {
-                            //     echo '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bg-warning text-dark p-2 rounded"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
-                            // } else {
-                            //     echo '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bg-info text-white p-2 rounded"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
-                            // }
-                                        
-                            // echo '<div class="media-body ml-3 w-25">
-                            //                 <div class="d-flex align-items-center justify-content-between mb-1">
-                            //                     <h6 class="mb-0 font-weight-bold">' . $username . '</h6>
-                            //                     <small class="small font-weight-bold">'. date('F d, Y', strtotime($date)) .'</small>
-                            //                 </div>
-                            //                 <p class="font-italic text-muted mb-0 text-small text-truncate">' . $content . '</p>
-                            //             </div>
-                            //         </div>
-                            //     </a>';
                         }
                     ?>
+                    </div>
+                </div>
+                <div class="row tab-pane fade min-vh-100" id="bot-user">
+                    <div class="container row m-0 p-0">  
+                        <?php
+                            $json = (new telegramBot($bot_id))->getChatAdministrators($chat_id)["result"];
+
+                            // var_dump($json);
+                            foreach ($json as $user) {
+                                echo '<div class="col-md-12 mb-2">
+                                        <div class="card col-md-12 shadow border">
+                                            <div class="card-body">
+                                                <h5 class="card-title font-weight-bold">' . $user['user']['first_name'] . '</h5>
+                                                <p class="card-text text-muted">ID: ' . $user['user']['id'] . '</p>
+                                                </form>
+                                            </div>
+                                        </div>' .
+                                        (strtolower($user['status']) != 'administrator' ? 
+                                            '<div class="card col-md-12 shadow border bg-light d-md-flex justify-content-between">
+                                                <div class="d-block">
+                                                    <div class="card-body d-flex justify-content-between align-middle">
+                                                        <form method="post" action="<?php echo htmlspecialchars(getURL()); ?>">
+                                                            <button type="submit" class="btn btn-primary mt-1 col-sm-12 col-md-auto mr-0 mr-md-2">
+                                                                <span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                                                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"></path>
+                                                                    </svg>
+                                                                </span>
+                                                                <span class="ml-1">Remove User</span>
+                                                            </button>
+                                                            <button type="submit" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                                                                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                                                                </svg>
+                                                                <span class="ml-1">Make Administrator</span>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>' : 
+                                            ''
+                                        ) . 
+                                    '</div>';
+                            }
+                        ?>
                     </div>
                 </div>
                 <div class="row tab-pane fade min-vh-100" id="nav-contact">

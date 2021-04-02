@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.0.4
+-- version 5.0.2
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Mar 28, 2021 at 07:13 PM
--- Server version: 10.4.17-MariaDB
--- PHP Version: 8.0.2
+-- Host: 127.0.0.1:3306
+-- Generation Time: Apr 02, 2021 at 08:55 AM
+-- Server version: 5.7.31
+-- PHP Version: 7.3.21
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -27,21 +27,27 @@ SET time_zone = "+00:00";
 -- Table structure for table `t_manager`
 --
 
-CREATE TABLE `t_manager` (
-  `m_id` int(11) NOT NULL,
+DROP TABLE IF EXISTS `t_manager`;
+CREATE TABLE IF NOT EXISTS `t_manager` (
+  `m_id` int(11) NOT NULL AUTO_INCREMENT,
   `m_uid` varchar(100) CHARACTER SET latin1 NOT NULL,
+  `m_chatid` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `m_type` int(11) NOT NULL,
   `m_userid` int(11) NOT NULL,
   `m_schedule` int(11) NOT NULL,
-  `m_date` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `m_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`m_id`),
+  UNIQUE KEY `m_uid` (`m_uid`),
+  KEY `manager_userid` (`m_userid`),
+  KEY `m_type` (`m_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `t_manager`
 --
 
-INSERT INTO `t_manager` (`m_id`, `m_uid`, `m_type`, `m_userid`, `m_schedule`, `m_date`) VALUES
-(43, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', 1, 1, 1, '2021-03-14 15:53:05');
+INSERT INTO `t_manager` (`m_id`, `m_uid`, `m_chatid`, `m_type`, `m_userid`, `m_schedule`, `m_date`) VALUES
+(45, '1642261514:AAGXoVxR9ciTFYbyPG9QYukdOhk5Fo_4aPI', '-1001436094290', 1, 1, 0, '2021-04-02 08:55:11');
 
 -- --------------------------------------------------------
 
@@ -49,11 +55,13 @@ INSERT INTO `t_manager` (`m_id`, `m_uid`, `m_type`, `m_userid`, `m_schedule`, `m
 -- Table structure for table `t_manager_type`
 --
 
-CREATE TABLE `t_manager_type` (
-  `mtype_id` int(11) NOT NULL,
+DROP TABLE IF EXISTS `t_manager_type`;
+CREATE TABLE IF NOT EXISTS `t_manager_type` (
+  `mtype_id` int(11) NOT NULL AUTO_INCREMENT,
   `mtype_name` varchar(20) CHARACTER SET latin1 NOT NULL,
-  `mtype_date` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `mtype_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`mtype_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `t_manager_type`
@@ -69,14 +77,18 @@ INSERT INTO `t_manager_type` (`mtype_id`, `mtype_name`, `mtype_date`) VALUES
 -- Table structure for table `t_messages`
 --
 
-CREATE TABLE `t_messages` (
-  `msg_id` int(11) NOT NULL,
+DROP TABLE IF EXISTS `t_messages`;
+CREATE TABLE IF NOT EXISTS `t_messages` (
+  `msg_id` int(11) NOT NULL AUTO_INCREMENT,
   `msg_content` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `msg_uid` int(11) NOT NULL,
   `msg_botid` varchar(100) CHARACTER SET latin1 NOT NULL,
-  `msg_schedule` tinyint(1) NOT NULL DEFAULT 0,
-  `msg_date` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `msg_schedule` tinyint(1) NOT NULL DEFAULT '0',
+  `msg_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`msg_id`),
+  KEY `msg_uid` (`msg_uid`),
+  KEY `msg_botid` (`msg_botid`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `t_messages`
@@ -112,12 +124,14 @@ INSERT INTO `t_messages` (`msg_id`, `msg_content`, `msg_uid`, `msg_botid`, `msg_
 -- Table structure for table `t_user`
 --
 
-CREATE TABLE `t_user` (
-  `u_id` int(11) NOT NULL,
+DROP TABLE IF EXISTS `t_user`;
+CREATE TABLE IF NOT EXISTS `t_user` (
+  `u_id` int(11) NOT NULL AUTO_INCREMENT,
   `u_username` varchar(2000) CHARACTER SET latin1 NOT NULL,
   `u_password` varchar(2000) CHARACTER SET latin1 NOT NULL,
-  `u_date` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `u_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`u_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `t_user`
@@ -125,67 +139,6 @@ CREATE TABLE `t_user` (
 
 INSERT INTO `t_user` (`u_id`, `u_username`, `u_password`, `u_date`) VALUES
 (1, 'admin', 'admin', '2021-03-01 08:08:52');
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `t_manager`
---
-ALTER TABLE `t_manager`
-  ADD PRIMARY KEY (`m_id`),
-  ADD UNIQUE KEY `m_uid` (`m_uid`),
-  ADD KEY `manager_userid` (`m_userid`),
-  ADD KEY `m_type` (`m_type`);
-
---
--- Indexes for table `t_manager_type`
---
-ALTER TABLE `t_manager_type`
-  ADD PRIMARY KEY (`mtype_id`);
-
---
--- Indexes for table `t_messages`
---
-ALTER TABLE `t_messages`
-  ADD PRIMARY KEY (`msg_id`),
-  ADD KEY `msg_uid` (`msg_uid`),
-  ADD KEY `msg_botid` (`msg_botid`);
-
---
--- Indexes for table `t_user`
---
-ALTER TABLE `t_user`
-  ADD PRIMARY KEY (`u_id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `t_manager`
---
-ALTER TABLE `t_manager`
-  MODIFY `m_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
-
---
--- AUTO_INCREMENT for table `t_manager_type`
---
-ALTER TABLE `t_manager_type`
-  MODIFY `mtype_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `t_messages`
---
-ALTER TABLE `t_messages`
-  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
-
---
--- AUTO_INCREMENT for table `t_user`
---
-ALTER TABLE `t_user`
-  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables
@@ -202,8 +155,7 @@ ALTER TABLE `t_manager`
 -- Constraints for table `t_messages`
 --
 ALTER TABLE `t_messages`
-  ADD CONSTRAINT `t_messages_ibfk_1` FOREIGN KEY (`msg_uid`) REFERENCES `t_user` (`u_id`),
-  ADD CONSTRAINT `t_messages_ibfk_2` FOREIGN KEY (`msg_botid`) REFERENCES `t_manager` (`m_uid`);
+  ADD CONSTRAINT `t_messages_ibfk_1` FOREIGN KEY (`msg_uid`) REFERENCES `t_user` (`u_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
