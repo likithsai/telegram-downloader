@@ -72,6 +72,12 @@
             return $this->sendRequest('sendMessage', $params);
         }
 
+
+        public function deleteMessage($chat_id, $message_id) {
+            $param = compact('chat_id', 'message_id');
+            return $this->sendRequest('deleteMessage', $param);
+        }
+
         /**
         * Forward messages of any kind.
         *
