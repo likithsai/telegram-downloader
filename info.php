@@ -25,6 +25,14 @@
                 }
                 break;
                 
+            case 'schedulestart':
+                $db->query("UPDATE t_messages SET msg_schedule='1' WHERE telegram_msg_id='$msg_id'");
+                break;
+
+            case 'scheduleend':
+                $db->query("UPDATE t_messages SET msg_schedule='0' WHERE telegram_msg_id='$msg_id'");
+                break;
+
             case 'default' :
                 break;
         }
@@ -260,7 +268,7 @@
                                                     </a>';
 
                                                     if($msg['msg_schedule']) {
-                                                        echo '<button type="submit" name="enable_scheduler" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
+                                                        echo '<a href="' . getURL() . '&task=scheduleend&msgid=' . $t_message_id . '" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
                                                             <span>
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
                                                                     <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -268,9 +276,9 @@
                                                                 </svg>
                                                             </span>
                                                             <span class="ml-1">Remove From Scheduler</span>
-                                                        </button>';
+                                                        </a>';
                                                     } else {
-                                                        echo '<button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                                        echo '<a href="' . getURL() . '&task=schedulestart&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
                                                             <span>
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
                                                                     <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
@@ -278,7 +286,7 @@
                                                                 </svg>
                                                             </span>
                                                             <span class="ml-1">Add to Scheduler</span>
-                                                        </button>';
+                                                        </a>';
                                                     }
                                                 echo '</form>
                                             </div>
