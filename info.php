@@ -24,7 +24,8 @@
     if(isset($_POST['send-message-btn']) && isset($_POST['send-message-text'])) { 
         $msg_content = html_entity_decode($_POST['send-message-text']);
         $db->query("INSERT INTO t_messages (msg_content, msg_uid, msg_botid) VALUES('$msg_content', $uid, '$bot_id')");
-        (new telegramBot($bot_id))->sendMessage ($chat_id, $msg_content, 'html', true);
+        (new telegramBot($bot_id))->sendMessage($chat_id, $msg_content, 'html', true);
+        
     }
 
     //  schedule message
@@ -46,6 +47,12 @@
 
     function getURL() {
         return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    }
+
+    //  function to check for valid JSON
+    function isJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
     }
 ?>
 
@@ -108,14 +115,13 @@
          <section class="jumbotron bg-dark text-white mb-0 p-0 rounded-0">
             <div class="container py-5 justify-content-start d-md-flex d-sm-block text-center text-md-left">
                 <div class="d-block mr-md-4 mr-sm-0 mb-4 mb-md-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-collection" viewBox="0 0 16 16">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-collection" viewBox="0 0 16 16">
                         <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"></path>
                     </svg>
                 </div>
                 <div class="d-block">
                     <h3><?php echo (new telegramBot($bot_id))->getMe()["result"]["first_name"]; ?></h3>
-                    <p class="lead mb-0">@<?php echo (new telegramBot($bot_id))->getMe()["result"]["username"]; ?></p>
-                    <p class="lead"><span>Member Count: </span><?php echo (new telegramBot($bot_id))->getChatMembersCount($chat_id)["result"]; ?></p>
+                    <p class="lead">@<?php echo (new telegramBot($bot_id))->getMe()["result"]["username"]; ?></p>
                 </div>
             </div>
         </section>
@@ -135,13 +141,6 @@
                             <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm5 4a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
                         </svg>
                         <span class="ml-1">Messages</span>
-                    </a>
-                    <a class="nav-link" id="nav-home-tab" data-toggle="tab" href="#bot-user" role="tab" aria-controls="nav-home" aria-selected="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
-                            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-                            <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
-                        </svg>
-                        <span class="ml-1">Admins</span>
                     </a>
                     <a class="nav-link" id="nav-contact-tab" data-toggle="tab" href="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="false">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock-fill" viewBox="0 0 16 16">
@@ -268,52 +267,6 @@
                             </div>';
                         }
                     ?>
-                    </div>
-                </div>
-                <div class="row tab-pane fade min-vh-100" id="bot-user">
-                    <div class="container row m-0 p-0">  
-                        <?php
-                            $json = (new telegramBot($bot_id))->getChatAdministrators($chat_id)["result"];
-
-                            // var_dump($json);
-                            foreach ($json as $user) {
-                                echo '<div class="col-md-12 mb-2">
-                                        <div class="card col-md-12 shadow border">
-                                            <div class="card-body">
-                                                <h5 class="card-title font-weight-bold">' . $user['user']['first_name'] . '</h5>
-                                                <p class="card-text text-muted">ID: ' . $user['user']['id'] . '</p>
-                                                </form>
-                                            </div>
-                                        </div>' .
-                                        (strtolower($user['status']) != 'administrator' ? 
-                                            '<div class="card col-md-12 shadow border bg-light d-md-flex justify-content-between">
-                                                <div class="d-block">
-                                                    <div class="card-body d-flex justify-content-between align-middle">
-                                                        <form method="post" action="<?php echo htmlspecialchars(getURL()); ?>">
-                                                            <button type="submit" class="btn btn-primary mt-1 col-sm-12 col-md-auto mr-0 mr-md-2">
-                                                                <span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
-                                                                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"></path>
-                                                                    </svg>
-                                                                </span>
-                                                                <span class="ml-1">Remove User</span>
-                                                            </button>
-                                                            <button type="submit" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
-                                                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-                                                                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
-                                                                </svg>
-                                                                <span class="ml-1">Make Administrator</span>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>' : 
-                                            ''
-                                        ) . 
-                                    '</div>';
-                            }
-                        ?>
                     </div>
                 </div>
                 <div class="row tab-pane fade min-vh-100" id="nav-contact">
