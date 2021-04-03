@@ -217,82 +217,85 @@
                 <div class="row tab-pane fade min-vh-100" id="nav-home">
                     <div class="list-group rounded-lg overflow-hidden shadow">
                     <?php 
-                        foreach ($sqlDataMsg as $msg) {
-                            $content = $msg['msg_content'];
-                            $date = $msg['msg_date'];
-                            $t_message_id = $msg['telegram_msg_id'];
-                            $username =  $db->query("SELECT u_username FROM t_user WHERE u_id='" . $msg['msg_uid'] ."'")->fetchAll()[0]["u_username"];
+                        if(!empty($sqlDataMsg)) {
+                            foreach ($sqlDataMsg as $msg) {
+                                $content = $msg['msg_content'];
+                                $date = $msg['msg_date'];
+                                $t_message_id = $msg['telegram_msg_id'];
+                                $username =  $db->query("SELECT u_username FROM t_user WHERE u_id='" . $msg['msg_uid'] ."'")->fetchAll()[0]["u_username"];
 
-                            echo '<div class="container row m-0 p-0">
-                        
-                                    <div class="card col-md-12 shadow border">
-                                        <div class="card-body">
-                                            <div class="d-md-flex d-sm-block justify-content-between">
-                                                <div class="d-block">
-                                                    <h5 class="card-title font-weight-bold">
-                                                        <span>
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
-                                                                <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
-                                                            </svg>
-                                                        </span>
-                                                        <span>' . $username . '</span>
-                                                    </h5>
-                                                    <p class="card-text text-muted text-truncate">' . $content . '</p>
-                                                </div>
-                                                <div class="d-block mt-3 mt-md-0">                                                
-                                                    <p class="d-flex justify-content-between align-middle">
-                                                        <span class="text-muted mr-2">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
-                                                                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-                                                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-                                                            </svg>
-                                                        </span>
-                                                        <span class="card-text text-muted w-100 m-0">'. date('F d, Y', strtotime($date)) .'</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="card col-md-12 shadow border bg-light mb-2 d-md-flex justify-content-between">
-                                        <div class="d-block">
-                                            <div class="card-body d-flex justify-content-between align-middle">
-                                                <form method="post" action="<?php echo htmlspecialchars(getURL()); ?>">
-                                                    <a href="' . getURL() . '&task=delete&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto mr-0 mr-md-2">
-                                                        <span>
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
-                                                                <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/>
-                                                            </svg>
-                                                        </span>
-                                                        <span class="ml-1">Delete Message</span>
-                                                    </a>';
-
-                                                    if($msg['msg_schedule']) {
-                                                        echo '<a href="' . getURL() . '&task=scheduleend&msgid=' . $t_message_id . '" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
+                                echo '<div class="container row m-0 p-0">
+                                        <div class="card col-md-12 shadow border">
+                                            <div class="card-body">
+                                                <div class="d-md-flex d-sm-block justify-content-between">
+                                                    <div class="d-block">
+                                                        <h5 class="card-title font-weight-bold">
                                                             <span>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
-                                                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
+                                                                    <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
                                                                 </svg>
                                                             </span>
-                                                            <span class="ml-1">Remove From Scheduler</span>
-                                                        </a>';
-                                                    } else {
-                                                        echo '<a href="' . getURL() . '&task=schedulestart&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
-                                                            <span>
+                                                            <span>' . $username . '</span>
+                                                        </h5>
+                                                        <p class="card-text text-muted text-truncate">' . $content . '</p>
+                                                    </div>
+                                                    <div class="d-block mt-3 mt-md-0">                                                
+                                                        <p class="d-flex justify-content-between align-middle">
+                                                            <span class="text-muted mr-2">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
                                                                     <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
                                                                     <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
                                                                 </svg>
                                                             </span>
-                                                            <span class="ml-1">Add to Scheduler</span>
-                                                        </a>';
-                                                    }
-                                                echo '</form>
+                                                            <span class="card-text text-muted w-100 m-0">'. date('F d, Y', strtotime($date)) .'</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                            </div>';
+
+                                        <div class="card col-md-12 shadow border bg-light mb-2 d-md-flex justify-content-between">
+                                            <div class="d-block">
+                                                <div class="card-body d-flex justify-content-between align-middle">
+                                                    <form method="post" action="<?php echo htmlspecialchars(getURL()); ?>">
+                                                        <a href="' . getURL() . '&task=delete&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto mr-0 mr-md-2">
+                                                            <span>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                                                    <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/>
+                                                                </svg>
+                                                            </span>
+                                                            <span class="ml-1">Delete Message</span>
+                                                        </a>';
+
+                                                        if($msg['msg_schedule']) {
+                                                            echo '<a href="' . getURL() . '&task=scheduleend&msgid=' . $t_message_id . '" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
+                                                                <span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+                                                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                                                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                                                    </svg>
+                                                                </span>
+                                                                <span class="ml-1">Remove From Scheduler</span>
+                                                            </a>';
+                                                        } else {
+                                                            echo '<a href="' . getURL() . '&task=schedulestart&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                                                <span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                                                                        <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                                                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                                                    </svg>
+                                                                </span>
+                                                                <span class="ml-1">Add to Scheduler</span>
+                                                            </a>';
+                                                        }
+                                                    echo '</form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                </div>';
+                            }
+                        } else {
+                            
                         }
                     ?>
                     </div>
