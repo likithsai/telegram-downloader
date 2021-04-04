@@ -1,86 +1,96 @@
 <?PHP
-    session_start();
-    require_once 'config/config.php';
-    require_once 'class/TelegramBot.php';
+session_start();
+require_once 'config/config.php';
+require_once 'class/TelegramBot.php';
 
-    //  session management
-    if (!isset($_SESSION['session_user_id'])) {
-        header('Location: login.php');
-        exit();
+//  session management
+if (!isset($_SESSION['session_user_id']))
+{
+    header('Location: login.php');
+    exit();
+}
+
+$bot_id = $_GET['id'];
+$chat_id = $_GET['chat_id'];
+$uid = $_SESSION['session_user_id'];
+
+if (isset($_GET['task']))
+{
+    $task = $_GET['task'];
+    $msg_id = $_GET['msgid'];
+
+    switch (strtolower($task))
+    {
+        case 'delete':
+            $delete_msg = (new telegramBot($bot_id))->deleteMessage($chat_id, $msg_id);
+            if ($delete_msg["result"])
+            {
+                $db->query("DELETE FROM t_messages WHERE telegram_msg_id=$msg_id");
+            }
+        break;
+
+        case 'schedulestart':
+            $db->query("UPDATE t_messages SET msg_schedule='1' WHERE telegram_msg_id='$msg_id'");
+        break;
+
+        case 'scheduleend':
+            $db->query("UPDATE t_messages SET msg_schedule='0' WHERE telegram_msg_id='$msg_id'");
+        break;
+
+        case 'default':
+        break;
     }
+}
 
-    $bot_id = $_GET['id'];
-    $chat_id = $_GET['chat_id'];
-    $uid = $_SESSION['session_user_id'];
-    
-    if(isset($_GET['task'])) {
-        $task = $_GET['task'];
-        $msg_id = $_GET['msgid'];
-        
-        switch(strtolower($task)) {
-            case 'delete' :
-                $delete_msg = (new telegramBot($bot_id))->deleteMessage($chat_id, $msg_id);
-                if ($delete_msg["result"]) {
-                    $db->query("DELETE FROM t_messages WHERE telegram_msg_id=$msg_id");
-                }
-                break;
-                
-            case 'schedulestart':
-                $db->query("UPDATE t_messages SET msg_schedule='1' WHERE telegram_msg_id='$msg_id'");
-                break;
+$sql = "SELECT * FROM t_user WHERE u_id='$uid'";
+$sqlData = $db->query($sql)->fetchArray();
+$tmsgsql = "SELECT * FROM t_messages WHERE msg_uid=$uid AND msg_botid='$bot_id'";
+$sqlDataMsg = $db->query($tmsgsql)->fetchAll();
+$tmgrsql = "SELECT * FROM t_manager WHERE m_uid='$bot_id' AND m_userid=$uid";
+$sqlDataMgr = $db->query($tmgrsql)->fetchAll();
 
-            case 'scheduleend':
-                $db->query("UPDATE t_messages SET msg_schedule='0' WHERE telegram_msg_id='$msg_id'");
-                break;
-
-            case 'default' :
-                break;
-        }
+//  send message
+if (isset($_POST['send-message-btn']) && isset($_POST['send-message-text']))
+{
+    $msg_content = html_entity_decode($_POST['send-message-text']);
+    $send_msg_status = (new telegramBot($bot_id))->sendMessage($chat_id, $msg_content, 'html', true);
+    if (!empty($send_msg_status))
+    {
+        $tel_msg_id = $send_msg_status["result"]["message_id"];
+        $db->query("INSERT INTO t_messages (msg_content, telegram_msg_id, msg_uid, msg_botid) VALUES('$msg_content', $tel_msg_id, $uid, '$bot_id')");
     }
+}
 
-    $sql = "SELECT * FROM t_user WHERE u_id='$uid'";
-    $sqlData = $db->query($sql)->fetchArray();
-    $tmsgsql = "SELECT * FROM t_messages WHERE msg_uid=$uid AND msg_botid='$bot_id'";
-    $sqlDataMsg = $db->query($tmsgsql)->fetchAll();
-    $tmgrsql = "SELECT * FROM t_manager WHERE m_uid='$bot_id' AND m_userid=$uid";
-    $sqlDataMgr = $db->query($tmgrsql)->fetchAll();
+//  schedule message
+if (isset($_POST['schedule-message-btn']) && isset($_POST['send-message-text']))
+{
+    $msg_content = html_entity_decode($_POST['send-message-text']);
+    $db->query("INSERT INTO t_messages (msg_content, msg_uid, msg_botid, msg_schedule) VALUES('$msg_content', $uid, '$bot_id', 1)");
+}
 
-    //  send message
-    if(isset($_POST['send-message-btn']) && isset($_POST['send-message-text'])) { 
-        $msg_content = html_entity_decode($_POST['send-message-text']);
-        $send_msg_status = (new telegramBot($bot_id))->sendMessage($chat_id, $msg_content, 'html', true);
-        if(!empty($send_msg_status)) {
-            $tel_msg_id = $send_msg_status["result"]["message_id"];
-            $db->query("INSERT INTO t_messages (msg_content, telegram_msg_id, msg_uid, msg_botid) VALUES('$msg_content', $tel_msg_id, $uid, '$bot_id')");
-        }
-    }
+//  enable scheduler
+if (isset($_POST['enable_scheduler']))
+{
+    $db->query("UPDATE t_manager SET m_schedule='1' WHERE m_uid='$bot_id'");
+}
 
-    //  schedule message
-    if(isset($_POST['schedule-message-btn']) && isset($_POST['send-message-text'])) { 
-        $msg_content = html_entity_decode($_POST['send-message-text']);
-        $db->query("INSERT INTO t_messages (msg_content, msg_uid, msg_botid, msg_schedule) VALUES('$msg_content', $uid, '$bot_id', 1)");
-    }
-    
+//  disable scheduler
+if (isset($_POST['disable_scheduler']))
+{
+    $db->query("UPDATE t_manager SET m_schedule='0' WHERE m_uid='$bot_id'");
+}
 
-    //  enable scheduler
-    if(isset($_POST['enable_scheduler'])) {
-        $db->query("UPDATE t_manager SET m_schedule='1' WHERE m_uid='$bot_id'");
-    }
+function getURL()
+{
+    return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+}
 
-    //  disable scheduler
-    if(isset($_POST['disable_scheduler'])) {
-        $db->query("UPDATE t_manager SET m_schedule='0' WHERE m_uid='$bot_id'");
-    }
-
-    function getURL() {
-        return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-    }
-
-    //  function to check for valid JSON
-    function isJson($string) {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
-    }
+//  function to check for valid JSON
+function isJson($string)
+{
+    json_decode($string);
+    return (json_last_error() == JSON_ERROR_NONE);
+}
 ?>
 
 <!DOCTYPE html>
@@ -90,6 +100,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 </head>
 <body class="bg-light">
@@ -111,27 +122,19 @@
                   <div class="navbar-nav ml-auto">
                      <div class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
-                              <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-                           </svg>
+                            <i class="bi bi-person"></i>
                            <?php echo $sqlData['u_username']; ?>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="dropdown03">
                            <a class="dropdown-item" href="settings">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
-                                 <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
-                                 <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
-                              </svg>
-                              <span>&nbsp;</span>
-                              <span>Settings</span>
+                                <i class="bi bi-gear"></i>
+                                <span>&nbsp;</span>
+                                <span>Settings</span>
                            </a>
                            <a class="dropdown-item" href="dashboard.php?task=logout">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
-                                 <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-                                 <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-                              </svg>
-                              <span>&nbsp;</span>
-                              <span>Logout</span>
+                                <i class="bi bi-box-arrow-left"></i>
+                                <span>&nbsp;</span>
+                                <span>Logout</span>
                            </a>
                         </div>
                      </div>
@@ -147,8 +150,8 @@
                     </svg>
                 </div>
                 <div class="d-block">
-                    <h3><?php echo (new telegramBot($bot_id))->getMe()["result"]["first_name"]; ?></h3>
-                    <p class="lead">@<?php echo (new telegramBot($bot_id))->getMe()["result"]["username"]; ?></p>
+                    <h3><?php echo (new telegramBot($bot_id))->getMe() ["result"]["first_name"]; ?></h3>
+                    <p class="lead">@<?php echo (new telegramBot($bot_id))->getMe() ["result"]["username"]; ?></p>
                 </div>
             </div>
         </section>
@@ -158,22 +161,20 @@
             <div class="container">
                 <div class="nav nav-pills flex-nowrap text-center d-flex justify-content-between overflow-auto" id="nav-tab" role="tablist">
                     <a class="nav-link active" id="nav-contact-tab" data-toggle="tab" href="#bot-info" role="tab" aria-controls="nav-contact" aria-selected="false">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
-                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412l-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                        </svg>
+                        <i class="bi bi-info-circle-fill"></i>
                         <span class="ml-1">Info</span>
                     </a>
                     <a class="nav-link" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat-left-dots-fill" viewBox="0 0 16 16">
-                            <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm5 4a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
-                        </svg>
+                        <i class="bi bi-chat-left-dots-fill"></i>
                         <span class="ml-1">Messages</span>
                     </a>
                     <a class="nav-link" id="nav-contact-tab" data-toggle="tab" href="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="false">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock-fill" viewBox="0 0 16 16">
-                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-                        </svg>
+                        <i class="bi bi-clock-fill"></i>
                         <span class="ml-1">Schedule</span>
+                    </a>
+                    <a class="nav-link" data-toggle="tab" href="#bot-settings" role="tab" aria-controls="nav-contact" aria-selected="false">
+                        <i class="bi bi-gear-fill"></i>
+                        <span class="ml-1">Settings</span>
                     </a>
                 </div>
             </div>
@@ -184,20 +185,21 @@
                 <div class="row tab-pane fade min-vh-100 active show" id="bot-info">
                     <div class="container row m-0 p-0">  
                         <?php
-                            $json = (new telegramBot($bot_id))->getMe()["result"];
-                            foreach ($json as $key => $value) {
-                                echo '<div class="card col-md-12 shadow border">
-                                        <div class="card-body">
-                                            <h5 class="card-title font-weight-bold">' . $key . '</h5>
-                                            <p class="card-text text-muted">' . $value . '</p>
-                                            </form>
-                                        </div>
-                                    </div>';
-                            }
-
-                            $description = (new telegramBot($bot_id))->getChat($chat_id)["result"]["description"];
-                            $invite_link = (new telegramBot($bot_id))->getChat($chat_id)["result"]["invite_link"];
+                        $json = (new telegramBot($bot_id))->getMe() ["result"];
+                        foreach ($json as $key => $value)
+                        {
                             echo '<div class="card col-md-12 shadow border">
+                                                                <div class="card-body">
+                                                                    <h5 class="card-title font-weight-bold">' . $key . '</h5>
+                                                                    <p class="card-text text-muted">' . $value . '</p>
+                                                                    </form>
+                                                                </div>
+                                                            </div>';
+                        }
+
+                        $description = (new telegramBot($bot_id))->getChat($chat_id) ["result"]["description"];
+                        $invite_link = (new telegramBot($bot_id))->getChat($chat_id) ["result"]["invite_link"];
+                        echo '<div class="card col-md-12 shadow border">
                                     <div class="card-body">
                                         <h5 class="card-title font-weight-bold">Description</h5>
                                         <p class="card-text text-muted">' . $description . '</p>
@@ -211,20 +213,22 @@
                                         </form>
                                     </div>
                                 </div>';
-                        ?>
+?>
                     </div>
                 </div>
                 <div class="row tab-pane fade min-vh-100" id="nav-home">
-                    <div class="list-group rounded-lg overflow-hidden shadow">
-                    <?php 
-                        if(!empty($sqlDataMsg)) {
-                            foreach ($sqlDataMsg as $msg) {
-                                $content = $msg['msg_content'];
-                                $date = $msg['msg_date'];
-                                $t_message_id = $msg['telegram_msg_id'];
-                                $username =  $db->query("SELECT u_username FROM t_user WHERE u_id='" . $msg['msg_uid'] ."'")->fetchAll()[0]["u_username"];
+                    <?php
+                if (!empty($sqlDataMsg))
+                {
+                    echo '<div class="list-group rounded-lg overflow-hidden shadow">';
+                    foreach ($sqlDataMsg as $msg)
+                    {
+                        $content = $msg['msg_content'];
+                        $date = $msg['msg_date'];
+                        $t_message_id = $msg['telegram_msg_id'];
+                        $username = $db->query("SELECT u_username FROM t_user WHERE u_id='" . $msg['msg_uid'] . "'")->fetchAll() [0]["u_username"];
 
-                                echo '<div class="container row m-0 p-0">
+                        echo '<div class="container row m-0 p-0">
                                         <div class="card col-md-12 shadow border">
                                             <div class="card-body">
                                                 <div class="d-md-flex d-sm-block justify-content-between">
@@ -247,7 +251,7 @@
                                                                     <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
                                                                 </svg>
                                                             </span>
-                                                            <span class="card-text text-muted w-100 m-0">'. date('F d, Y', strtotime($date)) .'</span>
+                                                            <span class="card-text text-muted w-100 m-0">' . date('F d, Y', strtotime($date)) . '</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -267,8 +271,9 @@
                                                             <span class="ml-1">Delete Message</span>
                                                         </a>';
 
-                                                        if($msg['msg_schedule']) {
-                                                            echo '<a href="' . getURL() . '&task=scheduleend&msgid=' . $t_message_id . '" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
+        if ($msg['msg_schedule'])
+        {
+            echo '<a href="' . getURL() . '&task=scheduleend&msgid=' . $t_message_id . '" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
                                                                 <span>
                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
                                                                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -277,8 +282,10 @@
                                                                 </span>
                                                                 <span class="ml-1">Remove From Scheduler</span>
                                                             </a>';
-                                                        } else {
-                                                            echo '<a href="' . getURL() . '&task=schedulestart&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+        }
+        else
+        {
+            echo '<a href="' . getURL() . '&task=schedulestart&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
                                                                 <span>
                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
                                                                         <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
@@ -287,18 +294,27 @@
                                                                 </span>
                                                                 <span class="ml-1">Add to Scheduler</span>
                                                             </a>';
-                                                        }
-                                                    echo '</form>
+        }
+        echo '</form>
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
                                 </div>';
-                            }
-                        } else {
-                            
-                        }
-                    ?>
-                    </div>
+    }
+}
+else
+{
+    echo '<div class="container">
+                  <div class="jumbotron text-center bg-light">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-chat-left-quote-fill my-3" viewBox="0 0 16 16">
+                      <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm7.194 2.766a1.688 1.688 0 0 0-.227-.272 1.467 1.467 0 0 0-.469-.324l-.008-.004A1.785 1.785 0 0 0 5.734 4C4.776 4 4 4.746 4 5.667c0 .92.776 1.666 1.734 1.666.343 0 .662-.095.931-.26-.137.389-.39.804-.81 1.22a.405.405 0 0 0 .011.59c.173.16.447.155.614-.01 1.334-1.329 1.37-2.758.941-3.706a2.461 2.461 0 0 0-.227-.4zM11 7.073c-.136.389-.39.804-.81 1.22a.405.405 0 0 0 .012.59c.172.16.446.155.613-.01 1.334-1.329 1.37-2.758.942-3.706a2.466 2.466 0 0 0-.228-.4 1.686 1.686 0 0 0-.227-.273 1.466 1.466 0 0 0-.469-.324l-.008-.004A1.785 1.785 0 0 0 10.07 4c-.957 0-1.734.746-1.734 1.667 0 .92.777 1.666 1.734 1.666.343 0 .662-.095.931-.26z"/>
+                    </svg>
+                    <h1>No Message Found!</h1>
+                  </div>
+               </div>';
+}
+?>
                 </div>
                 <div class="row tab-pane fade min-vh-100" id="nav-contact">
                     <div class="container row m-0 p-0">
@@ -308,26 +324,30 @@
                                 <h5 class="card-title font-weight-bold">Schedule Messages</h5>
                                 <p class="card-text text-muted">Scheduled messages allows the admin to send message in list after certain interval.</p>
                                 <form method="post" action="<?php echo htmlspecialchars(getURL()); ?>">
-                                    <?php 
-                                        if($sqlDataMgr[0]["m_schedule"] == 0) { 
-                                            echo '<button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                    <?php
+if ($sqlDataMgr[0]["m_schedule"] == 0)
+{
+    echo '<button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                                 <span class="ml-1">Schedule Message</span>
                                                 </button>';
-                                        } else {
-                                            echo '<button type="submit" name="disable_scheduler" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
+}
+else
+{
+    echo '<button type="submit" name="disable_scheduler" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                                 <span class="ml-1">Disable Scheduler</span>
                                                 </button>';
-                                        }
-                                    ?>
+}
+?>
                                 </form>
                             </div>
                         </div>
 
-                        <?php 
-                            if($sqlDataMgr[0]["m_schedule"] != 0) { 
-                                echo '<div class="card col-md-12 shadow border bg-light">
+                        <?php
+if ($sqlDataMgr[0]["m_schedule"] != 0)
+{
+    echo '<div class="card col-md-12 shadow border bg-light">
                                         <div class="card-body d-flex justify-content-between">
                                             <p class="card-text text-muted w-100 m-0 pt-1">Send Message after</p>
                                             <form class="form-inline">
@@ -344,9 +364,33 @@
                                             </form>
                                         </div>
                                     </div>';
-                            }
-                        ?>
+}
+?>
                         
+                    </div>
+                </div>
+                <div class="row tab-pane fade min-vh-100" id="bot-settings">
+                <div class="container row m-0 p-0">
+                        <div class="card col-md-12 shadow border">
+                            <div class="card-body">
+                                <h5 class="card-title font-weight-bold">Export Database</h5>
+                                <p class="card-text text-muted">Export Database to various format</p>
+                                <button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                                        <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                                    </svg>
+                                    <span class="ml-1">Export to SQL</span>
+                                </button>
+                                <button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                                        <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                                    </svg>
+                                    <span class="ml-1">Export to Excel</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
