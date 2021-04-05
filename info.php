@@ -1,96 +1,85 @@
 <?PHP
-session_start();
-require_once 'config/config.php';
-require_once 'class/TelegramBot.php';
+    session_start();
+    require_once 'config/config.php';
+    require_once 'class/TelegramBot.php';
 
-//  session management
-if (!isset($_SESSION['session_user_id']))
-{
-    header('Location: login.php');
-    exit();
-}
-
-$bot_id = $_GET['id'];
-$chat_id = $_GET['chat_id'];
-$uid = $_SESSION['session_user_id'];
-
-if (isset($_GET['task']))
-{
-    $task = $_GET['task'];
-    $msg_id = $_GET['msgid'];
-
-    switch (strtolower($task))
-    {
-        case 'delete':
-            $delete_msg = (new telegramBot($bot_id))->deleteMessage($chat_id, $msg_id);
-            if ($delete_msg["result"])
-            {
-                $db->query("DELETE FROM t_messages WHERE telegram_msg_id=$msg_id");
-            }
-        break;
-
-        case 'schedulestart':
-            $db->query("UPDATE t_messages SET msg_schedule='1' WHERE telegram_msg_id='$msg_id'");
-        break;
-
-        case 'scheduleend':
-            $db->query("UPDATE t_messages SET msg_schedule='0' WHERE telegram_msg_id='$msg_id'");
-        break;
-
-        case 'default':
-        break;
+    //  session management
+    if (!isset($_SESSION['session_user_id'])) {
+        header('Location: login.php');
+        exit();
     }
-}
 
-$sql = "SELECT * FROM t_user WHERE u_id='$uid'";
-$sqlData = $db->query($sql)->fetchArray();
-$tmsgsql = "SELECT * FROM t_messages WHERE msg_uid=$uid AND msg_botid='$bot_id'";
-$sqlDataMsg = $db->query($tmsgsql)->fetchAll();
-$tmgrsql = "SELECT * FROM t_manager WHERE m_uid='$bot_id' AND m_userid=$uid";
-$sqlDataMgr = $db->query($tmgrsql)->fetchAll();
+    $bot_id = $_GET['id'];
+    $chat_id = $_GET['chat_id'];
+    $uid = $_SESSION['session_user_id'];
 
-//  send message
-if (isset($_POST['send-message-btn']) && isset($_POST['send-message-text']))
-{
-    $msg_content = html_entity_decode($_POST['send-message-text']);
-    $send_msg_status = (new telegramBot($bot_id))->sendMessage($chat_id, $msg_content, 'html', true);
-    if (!empty($send_msg_status))
-    {
-        $tel_msg_id = $send_msg_status["result"]["message_id"];
-        $db->query("INSERT INTO t_messages (msg_content, telegram_msg_id, msg_uid, msg_botid) VALUES('$msg_content', $tel_msg_id, $uid, '$bot_id')");
+    if (isset($_GET['task']))  {
+        $task = $_GET['task'];
+        $msg_id = $_GET['msgid'];
+
+        switch (strtolower($task)) {
+            case 'delete':
+                $delete_msg = (new telegramBot($bot_id))->deleteMessage($chat_id, $msg_id);
+                if ($delete_msg["result"]) {
+                    $db->query("DELETE FROM t_messages WHERE telegram_msg_id=$msg_id");
+                }
+            break;
+
+            case 'schedulestart':
+                $db->query("UPDATE t_messages SET msg_schedule='1' WHERE telegram_msg_id='$msg_id'");
+            break;
+
+            case 'scheduleend':
+                $db->query("UPDATE t_messages SET msg_schedule='0' WHERE telegram_msg_id='$msg_id'");
+            break;
+
+            case 'default':
+            break;
+        }
     }
-}
 
-//  schedule message
-if (isset($_POST['schedule-message-btn']) && isset($_POST['send-message-text']))
-{
-    $msg_content = html_entity_decode($_POST['send-message-text']);
-    $db->query("INSERT INTO t_messages (msg_content, msg_uid, msg_botid, msg_schedule) VALUES('$msg_content', $uid, '$bot_id', 1)");
-}
+    $sql = "SELECT * FROM t_user WHERE u_id='$uid'";
+    $sqlData = $db->query($sql)->fetchArray();
+    $tmsgsql = "SELECT * FROM t_messages WHERE msg_uid=$uid AND msg_botid='$bot_id'";
+    $sqlDataMsg = $db->query($tmsgsql)->fetchAll();
+    $tmgrsql = "SELECT * FROM t_manager WHERE m_uid='$bot_id' AND m_userid=$uid";
+    $sqlDataMgr = $db->query($tmgrsql)->fetchAll();
 
-//  enable scheduler
-if (isset($_POST['enable_scheduler']))
-{
-    $db->query("UPDATE t_manager SET m_schedule='1' WHERE m_uid='$bot_id'");
-}
+    //  send message
+    if (isset($_POST['send-message-btn']) && isset($_POST['send-message-text'])) {
+        $msg_content = html_entity_decode($_POST['send-message-text']);
+        $send_msg_status = (new telegramBot($bot_id))->sendMessage($chat_id, $msg_content, 'html', true);
+        if (!empty($send_msg_status)) {
+            $tel_msg_id = $send_msg_status["result"]["message_id"];
+            $db->query("INSERT INTO t_messages (msg_content, telegram_msg_id, msg_uid, msg_botid) VALUES('$msg_content', $tel_msg_id, $uid, '$bot_id')");
+        }
+    }
 
-//  disable scheduler
-if (isset($_POST['disable_scheduler']))
-{
-    $db->query("UPDATE t_manager SET m_schedule='0' WHERE m_uid='$bot_id'");
-}
+    //  schedule message
+    if (isset($_POST['schedule-message-btn']) && isset($_POST['send-message-text'])) {
+        $msg_content = html_entity_decode($_POST['send-message-text']);
+        $db->query("INSERT INTO t_messages (msg_content, msg_uid, msg_botid, msg_schedule) VALUES('$msg_content', $uid, '$bot_id', 1)");
+    }
 
-function getURL()
-{
-    return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-}
+    //  enable scheduler
+    if (isset($_POST['enable_scheduler'])) {
+        $db->query("UPDATE t_manager SET m_schedule='1' WHERE m_uid='$bot_id'");
+    }
 
-//  function to check for valid JSON
-function isJson($string)
-{
-    json_decode($string);
-    return (json_last_error() == JSON_ERROR_NONE);
-}
+    //  disable scheduler
+    if (isset($_POST['disable_scheduler'])) {
+        $db->query("UPDATE t_manager SET m_schedule='0' WHERE m_uid='$bot_id'");
+    }
+
+    function getURL() {
+        return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    }
+
+    //  function to check for valid JSON
+    function isJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
 ?>
 
 <!DOCTYPE html>
@@ -99,12 +88,11 @@ function isJson($string)
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Dashboard - <?php echo $bot_id; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 </head>
 <body class="bg-light">
-
     <header>
          <nav class="navbar navbar-expand-md navbar-dark bg-dark sticky-top">
             <div class="container">
@@ -184,17 +172,16 @@ function isJson($string)
             <div class="tab-content" id="nav-tabContent">
                 <div class="row tab-pane fade min-vh-100 active show" id="bot-info">
                     <div class="container row m-0 p-0">  
-                        <?php
+                    <?php
                         $json = (new telegramBot($bot_id))->getMe() ["result"];
-                        foreach ($json as $key => $value)
-                        {
+                        foreach ($json as $key => $value) {
                             echo '<div class="card col-md-12 shadow border">
-                                                                <div class="card-body">
-                                                                    <h5 class="card-title font-weight-bold">' . $key . '</h5>
-                                                                    <p class="card-text text-muted">' . $value . '</p>
-                                                                    </form>
-                                                                </div>
-                                                            </div>';
+                                    <div class="card-body">
+                                        <h5 class="card-title font-weight-bold">' . $key . '</h5>
+                                        <p class="card-text text-muted">' . $value . '</p>
+                                        </form>
+                                    </div>
+                                </div>';
                         }
 
                         $description = (new telegramBot($bot_id))->getChat($chat_id) ["result"]["description"];
@@ -213,108 +200,78 @@ function isJson($string)
                                         </form>
                                     </div>
                                 </div>';
-?>
+                    ?>
                     </div>
                 </div>
                 <div class="row tab-pane fade min-vh-100" id="nav-home">
-                    <?php
-                if (!empty($sqlDataMsg))
-                {
-                    echo '<div class="list-group rounded-lg overflow-hidden shadow">';
-                    foreach ($sqlDataMsg as $msg)
-                    {
-                        $content = $msg['msg_content'];
-                        $date = $msg['msg_date'];
-                        $t_message_id = $msg['telegram_msg_id'];
-                        $username = $db->query("SELECT u_username FROM t_user WHERE u_id='" . $msg['msg_uid'] . "'")->fetchAll() [0]["u_username"];
+                <?php
+                    if (!empty($sqlDataMsg)) {
+                        echo '<div class="list-group rounded-lg overflow-hidden shadow">';
+                        foreach ($sqlDataMsg as $msg) {
+                            $content = $msg['msg_content'];
+                            $date = $msg['msg_date'];
+                            $t_message_id = $msg['telegram_msg_id'];
+                            $username = $db->query("SELECT u_username FROM t_user WHERE u_id='" . $msg['msg_uid'] . "'")->fetchAll() [0]["u_username"];
 
-                        echo '<div class="container row m-0 p-0">
-                                        <div class="card col-md-12 shadow border">
-                                            <div class="card-body">
-                                                <div class="d-md-flex d-sm-block justify-content-between">
-                                                    <div class="d-block">
-                                                        <h5 class="card-title font-weight-bold">
-                                                            <span>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
-                                                                    <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
-                                                                </svg>
-                                                            </span>
-                                                            <span>' . $username . '</span>
-                                                        </h5>
-                                                        <p class="card-text text-muted text-truncate">' . $content . '</p>
+                            echo '<div class="container row m-0 p-0">
+                                            <div class="card col-md-12 shadow border">
+                                                <div class="card-body">
+                                                    <div class="d-md-flex d-sm-block justify-content-between">
+                                                        <div class="d-block">
+                                                            <h5 class="card-title font-weight-bold">
+                                                                <i class="bi bi-people"></i>
+                                                                <span>' . $username . '</span>
+                                                            </h5>
+                                                            <p class="card-text text-muted text-truncate">' . $content . '</p>
+                                                        </div>
+                                                        <div class="d-block mt-3 mt-md-0">                                                
+                                                            <p class="d-flex justify-content-between align-middle">
+                                                                <i class="bi bi-clock"></i>
+                                                                <span class="card-text text-muted w-100 m-0">' . date('F d, Y', strtotime($date)) . '</span>
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div class="d-block mt-3 mt-md-0">                                                
-                                                        <p class="d-flex justify-content-between align-middle">
-                                                            <span class="text-muted mr-2">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
-                                                                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-                                                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-                                                                </svg>
-                                                            </span>
-                                                            <span class="card-text text-muted w-100 m-0">' . date('F d, Y', strtotime($date)) . '</span>
-                                                        </p>
+                                                </div>
+                                            </div>
+
+                                            <div class="card col-md-12 shadow border bg-light mb-2 d-md-flex justify-content-between">
+                                                <div class="d-block">
+                                                    <div class="card-body d-flex justify-content-between align-middle">
+                                                        <form method="post" action="<?php echo htmlspecialchars(getURL()); ?>">
+                                                            <a href="' . getURL() . '&task=delete&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto mr-0 mr-md-2">
+                                                                <i class="bi bi-trash-fill"></i>
+                                                                <span class="ml-1">Delete Message</span>
+                                                            </a>';
+
+                                                            if ($msg['msg_schedule']) {
+                                                                echo '<a href="' . getURL() . '&task=scheduleend&msgid=' . $t_message_id . '" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
+                                                                        <i class="bi bi-x-circle"></i
+                                                                        <span class="ml-1">Remove From Scheduler</span>
+                                                                    </a>';
+                                                            } else {
+                                                                echo '<a href="' . getURL() . '&task=schedulestart&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                                                        <i class="bi bi-clock"></i>
+                                                                        <span class="ml-1">Add to Scheduler</span>
+                                                                    </a>';
+                                                            }
+                                                        echo '</form>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <div class="card col-md-12 shadow border bg-light mb-2 d-md-flex justify-content-between">
-                                            <div class="d-block">
-                                                <div class="card-body d-flex justify-content-between align-middle">
-                                                    <form method="post" action="<?php echo htmlspecialchars(getURL()); ?>">
-                                                        <a href="' . getURL() . '&task=delete&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto mr-0 mr-md-2">
-                                                            <span>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
-                                                                    <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/>
-                                                                </svg>
-                                                            </span>
-                                                            <span class="ml-1">Delete Message</span>
-                                                        </a>';
-
-        if ($msg['msg_schedule'])
-        {
-            echo '<a href="' . getURL() . '&task=scheduleend&msgid=' . $t_message_id . '" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
-                                                                <span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
-                                                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                                                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-                                                                    </svg>
-                                                                </span>
-                                                                <span class="ml-1">Remove From Scheduler</span>
-                                                            </a>';
-        }
-        else
-        {
-            echo '<a href="' . getURL() . '&task=schedulestart&msgid=' . $t_message_id . '" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
-                                                                <span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
-                                                                        <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-                                                                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-                                                                    </svg>
-                                                                </span>
-                                                                <span class="ml-1">Add to Scheduler</span>
-                                                            </a>';
-        }
-        echo '</form>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    </div>';
+                        }
+                    } else {
+                        echo '<div class="container">
+                                    <div class="jumbotron text-center bg-light">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-chat-left-quote-fill my-3" viewBox="0 0 16 16">
+                                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm7.194 2.766a1.688 1.688 0 0 0-.227-.272 1.467 1.467 0 0 0-.469-.324l-.008-.004A1.785 1.785 0 0 0 5.734 4C4.776 4 4 4.746 4 5.667c0 .92.776 1.666 1.734 1.666.343 0 .662-.095.931-.26-.137.389-.39.804-.81 1.22a.405.405 0 0 0 .011.59c.173.16.447.155.614-.01 1.334-1.329 1.37-2.758.941-3.706a2.461 2.461 0 0 0-.227-.4zM11 7.073c-.136.389-.39.804-.81 1.22a.405.405 0 0 0 .012.59c.172.16.446.155.613-.01 1.334-1.329 1.37-2.758.942-3.706a2.466 2.466 0 0 0-.228-.4 1.686 1.686 0 0 0-.227-.273 1.466 1.466 0 0 0-.469-.324l-.008-.004A1.785 1.785 0 0 0 10.07 4c-.957 0-1.734.746-1.734 1.667 0 .92.777 1.666 1.734 1.666.343 0 .662-.095.931-.26z"/>
+                                        </svg>
+                                        <h1>No Message Found!</h1>
                                     </div>
                                 </div>';
-    }
-}
-else
-{
-    echo '<div class="container">
-                  <div class="jumbotron text-center bg-light">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-chat-left-quote-fill my-3" viewBox="0 0 16 16">
-                      <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm7.194 2.766a1.688 1.688 0 0 0-.227-.272 1.467 1.467 0 0 0-.469-.324l-.008-.004A1.785 1.785 0 0 0 5.734 4C4.776 4 4 4.746 4 5.667c0 .92.776 1.666 1.734 1.666.343 0 .662-.095.931-.26-.137.389-.39.804-.81 1.22a.405.405 0 0 0 .011.59c.173.16.447.155.614-.01 1.334-1.329 1.37-2.758.941-3.706a2.461 2.461 0 0 0-.227-.4zM11 7.073c-.136.389-.39.804-.81 1.22a.405.405 0 0 0 .012.59c.172.16.446.155.613-.01 1.334-1.329 1.37-2.758.942-3.706a2.466 2.466 0 0 0-.228-.4 1.686 1.686 0 0 0-.227-.273 1.466 1.466 0 0 0-.469-.324l-.008-.004A1.785 1.785 0 0 0 10.07 4c-.957 0-1.734.746-1.734 1.667 0 .92.777 1.666 1.734 1.666.343 0 .662-.095.931-.26z"/>
-                    </svg>
-                    <h1>No Message Found!</h1>
-                  </div>
-               </div>';
-}
-?>
+                    }
+                ?>
                 </div>
                 <div class="row tab-pane fade min-vh-100" id="nav-contact">
                     <div class="container row m-0 p-0">
@@ -325,48 +282,43 @@ else
                                 <p class="card-text text-muted">Scheduled messages allows the admin to send message in list after certain interval.</p>
                                 <form method="post" action="<?php echo htmlspecialchars(getURL()); ?>">
                                     <?php
-if ($sqlDataMgr[0]["m_schedule"] == 0)
-{
-    echo '<button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                                <span class="ml-1">Schedule Message</span>
-                                                </button>';
-}
-else
-{
-    echo '<button type="submit" name="disable_scheduler" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                                <span class="ml-1">Disable Scheduler</span>
-                                                </button>';
-}
-?>
+                                        if ($sqlDataMgr[0]["m_schedule"] == 0) {
+                                            echo '<button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                                                        <span class="ml-1">Schedule Message</span>
+                                                                                        </button>';
+                                        } else {
+                                            echo '<button type="submit" name="disable_scheduler" class="btn btn-danger mt-1 col-sm-12 col-md-auto">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                                                        <span class="ml-1">Disable Scheduler</span>
+                                                                                        </button>';
+                                        }
+                                    ?>
                                 </form>
                             </div>
                         </div>
 
                         <?php
-if ($sqlDataMgr[0]["m_schedule"] != 0)
-{
-    echo '<div class="card col-md-12 shadow border bg-light">
-                                        <div class="card-body d-flex justify-content-between">
-                                            <p class="card-text text-muted w-100 m-0 pt-1">Send Message after</p>
-                                            <form class="form-inline">
-                                                <label class="sr-only" for="inlineFormInputName2">Name</label>
-                                                <select class="custom-select">
-                                                    <option selected>Select Option</option>
-                                                    <option value="1">1 Minute</option>
-                                                    <option value="5">5 Minute</option>
-                                                    <option value="10">10 Minute</option>
-                                                    <option value="15">15 Minute</option>
-                                                    <option value="30">30 Minute</option>
-                                                    <option value="60">1 hr</option>
-                                                </select>
-                                            </form>
-                                        </div>
-                                    </div>';
-}
-?>
-                        
+                            if ($sqlDataMgr[0]["m_schedule"] != 0) {
+                                echo '<div class="card col-md-12 shadow border bg-light">
+                                                                    <div class="card-body d-flex justify-content-between">
+                                                                        <p class="card-text text-muted w-100 m-0 pt-1">Send Message after</p>
+                                                                        <form class="form-inline">
+                                                                            <label class="sr-only" for="inlineFormInputName2">Name</label>
+                                                                            <select class="custom-select">
+                                                                                <option selected>Select Option</option>
+                                                                                <option value="1">1 Minute</option>
+                                                                                <option value="5">5 Minute</option>
+                                                                                <option value="10">10 Minute</option>
+                                                                                <option value="15">15 Minute</option>
+                                                                                <option value="30">30 Minute</option>
+                                                                                <option value="60">1 hr</option>
+                                                                            </select>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>';
+                            }
+                        ?>
                     </div>
                 </div>
                 <div class="row tab-pane fade min-vh-100" id="bot-settings">
@@ -376,17 +328,11 @@ if ($sqlDataMgr[0]["m_schedule"] != 0)
                                 <h5 class="card-title font-weight-bold">Export Database</h5>
                                 <p class="card-text text-muted">Export Database to various format</p>
                                 <button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
-                                        <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-                                        <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-                                    </svg>
+                                    <i class="bi bi-box-arrow-right"></i>
                                     <span class="ml-1">Export to SQL</span>
                                 </button>
                                 <button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
-                                        <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-                                        <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-                                    </svg>
+                                    <i class="bi bi-box-arrow-right"></i>
                                     <span class="ml-1">Export to Excel</span>
                                 </button>
                             </div>
