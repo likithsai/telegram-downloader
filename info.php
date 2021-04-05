@@ -15,7 +15,10 @@
 
     if (isset($_GET['task']))  {
         $task = $_GET['task'];
-        $msg_id = $_GET['msgid'];
+
+        if(isset($_GET['msgid'])) {
+            $msg_id = $_GET['msgid'];
+        }
 
         switch (strtolower($task)) {
             case 'delete':
@@ -23,18 +26,26 @@
                 if ($delete_msg["result"]) {
                     $db->query("DELETE FROM t_messages WHERE telegram_msg_id=$msg_id");
                 }
-            break;
+                break;
+
+            case 'export':
+                if(isset($_GET['format'])) {
+                    if(strtolower($_GET['format']) == 'excel') {
+                        exportToExcel($db);
+                    }
+                }
+                break;    
 
             case 'schedulestart':
                 $db->query("UPDATE t_messages SET msg_schedule='1' WHERE telegram_msg_id='$msg_id'");
-            break;
+                break;
 
             case 'scheduleend':
                 $db->query("UPDATE t_messages SET msg_schedule='0' WHERE telegram_msg_id='$msg_id'");
-            break;
+                break;
 
             case 'default':
-            break;
+                break;
         }
     }
 
@@ -327,14 +338,10 @@
                             <div class="card-body">
                                 <h5 class="card-title font-weight-bold">Export Database</h5>
                                 <p class="card-text text-muted">Export Database to various format</p>
-                                <button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    <span class="ml-1">Export to SQL</span>
-                                </button>
-                                <button type="submit" name="enable_scheduler" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
+                                <a href="export.php?type=excel" target="_blank" class="btn btn-primary mt-1 col-sm-12 col-md-auto">
                                     <i class="bi bi-box-arrow-right"></i>
                                     <span class="ml-1">Export to Excel</span>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
