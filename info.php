@@ -361,9 +361,10 @@
                             <div class="input-group">
                                 <textarea name="send-message-text" class="form-control bg-transparent border-0 text-white" placeholder="Type your message..." rows="1" style="overflow: hidden; overflow-wrap: break-word; resize: none;" required></textarea>
                                 <div class="input-group-append">
-                                    <button class="btn btn-ico btn-secondary btn-minimal bg-transparent border-0 dropzone-button-js dz-clickable" type="button">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-paperclip injected-svg"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-                                    </button>
+                                    <label class="custom-file container" id="customFile">
+                                        <input type="file" class="custom-file-input d-none" multiple>
+                                        <span class="custom-file-control form-control-file text-primary btn">Select File</span>
+                                    </label>
                                     <button type="submit" name="schedule-message-btn" class="btn btn-ico btn-secondary btn-minimal bg-transparent border-0 dropzone-button-js dz-clickable">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                     </button>
@@ -372,6 +373,7 @@
                                     </button>
                                 </div>
                             </div>
+                            <div id="files-selected"></div>
                         </div>
                     </div>
                 </form>
@@ -383,6 +385,34 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="https://getbootstrap.com/docs/4.0/assets/js/vendor/holder.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('input[type="file"]').change(function(e) {
+                if( $(this).get(0).files.length > 0) {
+                    for (var i = 0; i < $(this).get(0).files.length; ++i) {
+                        $('#files-selected').append('<span id="file' + i + '" class="badge badge-secondary mx-1">' + $(this).get(0).files[i].name + ' (' + bytesToSize($(this).get(0).files[i].size) + ')' + ' <i id="btn_tag_delete" class="bi bi-x-circle-fill" data-delete-id="' + i + '"></i></span>');
+                    }
 
+                    $('#files-selected').append('<span id="file-clear" class="badge badge-secondary mx-1 bg-danger">Clear All File</span>');
+                }
+            });
+
+            $(document).on("click", "#btn_tag_delete", function() {
+                var file_id = $(this).attr('data-delete-id');
+                $('#file' + file_id).remove();
+            });
+
+            $(document).on("click", "#file-clear", function() {
+                $('#files-selected').html('');
+            });
+
+            function bytesToSize(bytes) {
+                var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                if (bytes == 0) return '0 Byte';
+                var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+                return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+            }
+        });
+    </script>
 </body>
 </html>
