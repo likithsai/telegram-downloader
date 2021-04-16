@@ -1,4 +1,4 @@
-<?PHP
+<?php
     session_start();
     require_once 'config/config.php';
     require_once 'class/TelegramBot.php';
@@ -385,34 +385,6 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="https://getbootstrap.com/docs/4.0/assets/js/vendor/holder.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('input[type="file"]').change(function(e) {
-                if( $(this).get(0).files.length > 0) {
-                    for (var i = 0; i < $(this).get(0).files.length; ++i) {
-                        $('#files-selected').append('<span id="file' + i + '" class="badge badge-secondary mx-1">' + $(this).get(0).files[i].name + ' (' + bytesToSize($(this).get(0).files[i].size) + ')' + ' <i id="btn_tag_delete" class="bi bi-x-circle-fill" data-delete-id="' + i + '"></i></span>');
-                    }
-
-                    $('#files-selected').append('<span id="file-clear" class="badge badge-secondary mx-1 bg-danger">Clear All File</span>');
-                }
-            });
-
-            $(document).on("click", "#btn_tag_delete", function() {
-                var file_id = $(this).attr('data-delete-id');
-                $('#file' + file_id).remove();
-            });
-
-            $(document).on("click", "#file-clear", function() {
-                $('#files-selected').html('');
-            });
-
-            function bytesToSize(bytes) {
-                var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-                if (bytes == 0) return '0 Byte';
-                var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-                return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
-            }
-        });
-    </script>
+    <script src="js/script.min.js"></script>
 </body>
 </html>
